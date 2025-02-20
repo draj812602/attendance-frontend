@@ -189,7 +189,19 @@ function App() {
                 attendanceRecords.map((record, index) => (
                   <tr key={index}>
                     <td>{record.date}</td>
-                    <td>{record.time}</td>
+                    <td>
+                      {record.timestamp
+                        ? new Date(record.timestamp).toLocaleTimeString(
+                            "en-US",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            }
+                          )
+                        : "--"}{" "}
+                      {/* ✅ Fix applied */}
+                    </td>
                     <td
                       className={
                         record.status === "Present"
