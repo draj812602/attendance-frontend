@@ -1,0 +1,35 @@
+.app-container {
+  width: 500px;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h4 {
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+input {
+  font-size: 14px;
+  padding: 8px;
+}
+
+button {
+  font-size: 14px;
+  padding: 10px;
+}
+
+.attendance-table {
+  text-align: left;
+}
+
+.attendance-table h5 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.table {
+  font-size: 13px;
+}

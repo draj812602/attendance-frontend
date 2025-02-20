@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Attendance Tracker",
+  "version": "1.0",
+  "description": "Chrome extension to track employee attendance.",
+  "permissions": ["storage", "alarms"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": ["http://localhost:5000/*"],
+  "action": {
+    "default_popup": "index.html"
+  }
+}
