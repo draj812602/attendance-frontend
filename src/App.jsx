@@ -62,7 +62,9 @@ function App() {
       });
     } catch (error) {
       console.error("Error:", error);
-      setMessage("Failed to mark attendance. Try again.");
+      setMessage(
+        "You have been successfully registered, but we couldn't mark your attendance. (You might not be in the office). Please try again."
+      );
     } finally {
       setLoading(false);
     }
