@@ -235,7 +235,7 @@ function App() {
                 {loading ? (
                   <span className="spinner-border spinner-border-sm"></span>
                 ) : (
-                  Submit
+                  "Submit"
                 )}
               </button>
               <button
