@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DatePicker from "react-multi-date-picker";
+import "react-multi-date-picker/styles/backgrounds/bg-dark.css"; // Style fix
 import "bootstrap/dist/css/bootstrap.min.css";
-import "react-multi-date-picker/styles/backgrounds/bg-dark.css"; // or another available style
 import "./App.css";
 
 const API_BASE_URL = "https://attandance-backend-r6cc.onrender.com/api";
@@ -29,20 +29,11 @@ function App() {
       } else {
         setIsRegistered(false);
       }
+
       if (result.backdateSubmitted) {
         setBackdateSubmitted(true);
       }
     });
-
-    // Initialize Bootstrap Tooltip
-    setTimeout(() => {
-      const tooltipTriggerList = document.querySelectorAll(
-        '[data-bs-toggle="tooltip"]'
-      );
-      tooltipTriggerList.forEach((tooltipTriggerEl) => {
-        new window.bootstrap.Tooltip(tooltipTriggerEl);
-      });
-    }, 500);
   }, []);
 
   const fetchEmployeeName = async (id) => {
@@ -54,28 +45,27 @@ function App() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!empID || !empName) {
       setMessage("Please enter Employee ID and Name.");
       return;
     }
 
     setLoading(true);
-    axios
-      .post(`${API_BASE_URL}/attendance`, { empID })
-      .then(() => {
-        chrome.storage.local.set({ empID, empName }, () => {
-          setMessage("Attendance marked successfully.");
-          setIsRegistered(true);
-        });
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        setMessage("Failed to mark attendance. Try again.");
-      })
-      .finally(() => {
-        setLoading(false);
+    try {
+      await axios.post(`${API_BASE_URL}/employee`, { empID, empName });
+      await axios.post(`${API_BASE_URL}/attendance`, { empID });
+
+      chrome.storage.local.set({ empID, empName }, () => {
+        setMessage("Employee registered and attendance marked successfully.");
+        setIsRegistered(true);
       });
+    } catch (error) {
+      console.error("Error:", error);
+      setMessage("Failed to mark attendance. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchAttendanceRecords = async () => {
@@ -111,7 +101,7 @@ function App() {
     try {
       await axios.post(`${API_BASE_URL}/backdate-attendance`, {
         empID,
-        dates: selectedDates.map((date) => date.format("YYYY-MM-DD")), // ✅ Fixed Date Formatting
+        dates: selectedDates.map((date) => date.format("YYYY-MM-DD")),
       });
 
       setMessage("Backdated attendance marked successfully.");
@@ -119,7 +109,7 @@ function App() {
       setBackdateSubmitted(true);
       chrome.storage.local.set({ backdateSubmitted: true });
 
-      fetchAttendanceRecords(); // Refresh attendance data
+      fetchAttendanceRecords();
     } catch (error) {
       console.error("Error marking backdated attendance:", error);
       setMessage("Failed to mark backdated attendance.");
@@ -130,7 +120,7 @@ function App() {
 
   return (
     <div className="container p-3 text-center app-container">
-      <h4 className="fw-bold">Attendance Tracker</h4>
+      <h4>Attendance Tracker</h4>
 
       {!isRegistered ? (
         <>
@@ -176,25 +166,21 @@ function App() {
         <>
           {!backdateMode ? (
             <>
-              <h5 className="fw-bold">
+              <h5>
                 Hi {empName} ({empID}), your attendance for this quarter is{" "}
-                <strong className="text-primary">{totalAttendance}</strong>
+                <strong>{totalAttendance}</strong>
               </h5>
-
               {!backdateSubmitted && (
                 <button
                   className="btn btn-warning mb-3"
                   onClick={() => setBackdateMode(true)}
-                  data-bs-toggle="tooltip"
-                  data-bs-placement="top"
-                  title="This is a one-time process. You cannot log backdated attendance again."
+                  title="You can only do this once"
                 >
                   Log Backdated Attendance
                 </button>
               )}
-
               <table className="table table-bordered mt-2">
-                <thead className="table-light">
+                <thead>
                   <tr>
                     <th>Date</th>
                     <th>Time</th>
@@ -202,37 +188,32 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {attendanceRecords.length > 0 ? (
-                    attendanceRecords.map((record, index) => (
-                      <tr key={index}>
-                        <td>{record.date}</td>
-                        <td>{record.time}</td>
-                        <td
-                          className={
-                            record.status === "Present"
-                              ? "text-success fw-bold"
-                              : "text-danger fw-bold"
-                          }
-                        >
-                          {record.status}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="3">No attendance records found</td>
+                  {attendanceRecords.map((record, index) => (
+                    <tr key={index}>
+                      <td>{record.date}</td>
+                      <td>{record.time}</td>
+                      <td
+                        className={
+                          record.status === "Present"
+                            ? "text-success"
+                            : "text-danger"
+                        }
+                      >
+                        {record.status}
+                      </td>
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
             </>
           ) : (
-            <div className="card p-4 shadow">
-              <h5 className="fw-bold">Select Backdated Attendance</h5>
+            <div className="backdate-container">
+              <h5>Select Backdated Attendance</h5>
               <DatePicker
                 multiple
                 value={selectedDates}
                 onChange={setSelectedDates}
+                format="YYYY-MM-DD"
                 maxDate={new Date()}
                 minDate={
                   new Date(
@@ -241,15 +222,22 @@ function App() {
                     1
                   )
                 }
+                containerStyle={{ zIndex: 9999, position: "relative" }}
+                inputClass="form-control backdate-input"
               />
+
               <button
-                className="btn btn-primary mt-3 me-2"
+                className="btn btn-primary mt-2"
                 onClick={handleBackdateSubmit}
               >
-                Submit
+                {loading ? (
+                  <span className="spinner-border spinner-border-sm"></span>
+                ) : (
+                  Submit
+                )}
               </button>
               <button
-                className="btn btn-secondary mt-3"
+                className="btn btn-secondary mt-2"
                 onClick={() => setBackdateMode(false)}
               >
                 Cancel
